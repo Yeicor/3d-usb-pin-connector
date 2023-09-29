@@ -1,13 +1,16 @@
 import cadquery as cq
 import os
 
+tol = 0.2 # Tolerance
+wall = 0.4 # Minimum wall width, if aligned with
+
 # USB standard measurements
 usb_conn_width = 12
 usb_conn_height = 4.5
-usb_conn_depth = 14.7 * 2 # Debugging for easier grip
-usb_conn_platform_y = [0.4 - 0.2, 1.9 + 0.2]
+usb_conn_depth = 12 * 1.5 # Debugging for easier grip
+usb_conn_platform_y = [0.4 - tol, 1.9 + tol * 3]
 usb_conn_platform_height = usb_conn_platform_y[1] - usb_conn_platform_y[0]
-usb_conn_platform_width = usb_conn_width - 1
+usb_conn_platform_width = usb_conn_width - wall*2
 
 # Create a basic connector that will fit in a USB female tightly
 usb_conn = (
