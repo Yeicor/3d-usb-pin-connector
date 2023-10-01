@@ -1,6 +1,10 @@
+# A basic 3D printed connector that will:
+# - Fit in the top-half of a USB
+# - Connect 2 pins to power and ground
+
 # ================== IMPORTS BOILERPLATE ==================
 import cadquery as cq
-import os
+import os, math
 from_cq_editor = False
 if 'show_object' in globals(): # If using cq-editor, only render the final object
     from_cq_editor = True
@@ -8,115 +12,90 @@ if 'show_object' in globals(): # If using cq-editor, only render the final objec
 else:
     show = lambda *args, **kwargs: print("Ignoring show(...) as cq-editor was not detected")
     debug = lambda *args, **kwargs: print("Ignoring debug(...) as cq-editor was not detected")
-tol = 0.2 # Tolerance
-wall_min = 0.4 # Minimum wall width, if aligned with
-wall = wall_min * 3
 
 # ================== PARAMETERS ==================
+# 3D printing basics
+tol = 0.2 # Tolerance
+wall_min = 0.4 # Minimum wall width
+wall = wall_min * 3 # Recommended wall width
+
 # USB
-usb_conn_width = 12
-usb_conn_height = 4.5
-usb_conn_depth = 10
-usb_conn_platform_y = [0.4 - tol, 1.9 + tol * 3]
-usb_conn_platform_height = usb_conn_platform_y[1] - usb_conn_platform_y[0]
-usb_conn_platform_width = usb_conn_width - wall_min*2
+usb_conn_size = cq.Vector(12, 4.5, 10)
+usb_conn_platform_size = cq.Vector(usb_conn_size.x - wall_min*2, usb_conn_size.y/2, usb_conn_size.z)
 
 # Pins
 pin_conn_size = cq.Vector(0.8, 0.8, 6)
-pin_handle_size = cq.Vector(2.7, 2.7, 14.1)
+pin_handle_size = cq.Vector(2.8, 2.8, 14.2)
 pin_sep = 7 # Distance between the centers of the power and ground pins
 
 # ================== MODELLING ==================
-# Create a basic connector that will fit in a USB
-usb_box = (
-    cq.Workplane("XY")
-    .box(usb_conn_width, usb_conn_height, usb_conn_depth + wall_min, centered=[True, False, True])
-)
-usb_conn = (
-    usb_box
-    .faces("<Z")
-    .workplane()
-    .transformed(offset=(0, -usb_conn_platform_y[0] - usb_conn_platform_height/2, 0))
-    .rect(usb_conn_platform_width, usb_conn_platform_y[1]-usb_conn_platform_y[0])
-    .cutBlind(-usb_conn_depth)
-)
 
-# Create the box and holes for the pins
-#debug(usb_conn.faces(">Z"))
-pin_box_extrusion = pin_handle_size.z + pin_conn_size.z - usb_conn_depth + wall
-pin_box = (
-    usb_conn
-    .faces(">Z")
-    .workplane(centerOption="CenterOfMass")
-    .rect(usb_conn_width, usb_conn_height)
-    .extrude(pin_box_extrusion)
-)
-pin_box_height_adjust = pin_conn_size.y - wall_min
-pin_conn = (
-    pin_box
-    .faces(">Z")
-    .workplane(centerOption="CenterOfMass")
-    .transformed(offset=cq.Vector(0, pin_box_height_adjust, 0))
-    # Cable
-    .pushPoints([cq.Vector(-pin_sep/2, 0, 0), cq.Vector(pin_sep/2, 0, 0)])
-    .rect(pin_conn_size.x + tol, (pin_conn_size.y + tol) * 2) # Hack for easier cut later
-    .cutBlind(-wall)
-    # Handle
-    .transformed(offset=cq.Vector(0, 0, -wall))
-    .pushPoints([cq.Vector(-pin_sep/2, 0, 0), cq.Vector(pin_sep/2, 0, 0)])
-    .rect(pin_handle_size.x + tol, pin_handle_size.y + tol)
-    .cutBlind(-pin_handle_size.z)
-    # Pin
-    .transformed(offset=cq.Vector(0, 0, -pin_handle_size.z))
-    .pushPoints([cq.Vector(-pin_sep/2, 0, 0), cq.Vector(pin_sep/2, 0, 0)])
-    .rect(pin_conn_size.x + tol, pin_conn_size.y + tol)
-    .cutBlind(-pin_conn_size.z)
-)
-
-# Now split the connector into two parts that get inserted at the same time
-# Required for printing without supports
-one_part_connector = pin_conn
-bb = one_part_connector.val().BoundingBox()
-cutPeakZ = bb.center.z - bb.zlen/3
-cutBaseHeight = bb.center.y - wall_min
-cutExtraHeight = wall_min*1.5
-cut_width_eps = 0.001
-split_pattern_surface = (
+# Complete box to work on...
+max_depth = wall + pin_handle_size.z + max(usb_conn_size.z, pin_conn_size.z + wall)
+work_box = (
     cq.Workplane("YZ")
-    .moveTo(cutBaseHeight - cut_width_eps, bb.zmin)
-    .lineTo(cutBaseHeight, bb.zmin)
-    .lineTo(cutBaseHeight, cutPeakZ)
-    .lineTo(cutBaseHeight + cutExtraHeight, cutPeakZ)
-    .lineTo(cutBaseHeight, cutPeakZ +  + wall)
-    .lineTo(cutBaseHeight, bb.zmax)
-    .lineTo(cutBaseHeight - cut_width_eps, bb.zmax)
-    .lineTo(cutBaseHeight- cut_width_eps, cutPeakZ + wall - cut_width_eps)
-    .lineTo(cutBaseHeight + cutExtraHeight - cut_width_eps*2, cutPeakZ + cut_width_eps)
-    .lineTo(cutBaseHeight- cut_width_eps, cutPeakZ + cut_width_eps)
-    .close() 
-    .extrude(usb_conn_width/2, both=True)
+    .box(usb_conn_size.x, usb_conn_size.y, max_depth, centered=[True, False, True])
 )
-ignore_middle_cut = (
-    cq.Workplane("XY")
-    .transformed(offset=(0, 0, -wall_min))
-    .box(bb.xlen - wall_min*2, bb.ylen*2, usb_conn_depth)
-)
-#debug(ignore_middle_cut)
-split_pattern_surface = (
-    split_pattern_surface
-    .cut(ignore_middle_cut)
-)
-#debug(split_pattern_surface)
 
-conn_parts_merged = (
-    one_part_connector
-    .cut(split_pattern_surface)
-    .solids() 
+# Without the usb platform...
+work_box = (
+    #work_box -
+    work_box
+    .faces(">X")
+    .workplane()
+    .rect(usb_conn_platform_size.x, usb_conn_platform_size.y, centered=[True, False])
+    .cutBlind(-usb_conn_platform_size.z)
 )
-conn_parts = [cq.Workplane(x) for x in conn_parts_merged.vals()]
+
+# With pin holes
+work_box = (
+    work_box
+    .faces("|Z").faces(">>Z[1]")
+    .workplane()
+    .transformed(offset=cq.Vector(-usb_conn_platform_size.z, 0, 0))
+    .pushPoints([cq.Vector(0, -pin_sep/2, 0), cq.Vector(0, pin_sep/2, 0)])
+    .rect(pin_conn_size.z + tol * 2, pin_conn_size.x + tol * 2, centered=[False, True])
+    .cutBlind(-(pin_conn_size.y + tol * 2))
+)
+
+# With pin handle and cable holes
+work_box = (
+    work_box
+    .faces("%Plane and |X").faces(">>X[1]")
+    .workplane()
+    .pushPoints([cq.Vector(-pin_sep/2, 0, 0), cq.Vector(pin_sep/2, 0, 0)])
+    .rect(pin_handle_size.x + tol * 2, pin_handle_size.y + tol * 2)
+    .cutBlind(-(pin_handle_size.z + tol * 2))
+)
+
+# With cable holes
+work_box = (
+    work_box
+    .faces("%Plane and |X").faces(">>X[1]")
+    .workplane()
+    .pushPoints([cq.Vector(-pin_sep/2, 0, 0), cq.Vector(pin_sep/2, 0, 0)])
+    .rect(pin_handle_size.x*3/4, pin_handle_size.y*3/4)
+    .cutBlind(-wall)
+)
+
+# Without the need for supports and plausible assembly (remove ceilings)
+work_box: cq.Workplane
+to_remove = cq.Workplane()
+for roof_face in work_box.faces("%Plane and |Z").faces(">>Z[1] or >>Z[2]").vals():
+    bb = roof_face.BoundingBox()
+    bb2 = work_box.val().BoundingBox()
+    to_remove_iter = (
+        cq.Workplane(roof_face)
+        .rect(bb.xlen, bb.ylen)
+        .extrude(bb2.zmin - bb.zmin)
+    )
+    # Combine removals
+    to_remove += to_remove_iter
+work_box = work_box - to_remove
+#debug(work_box.faces("|Z").faces(">>Z[1] or >>Z[2]"))
 
 # ================== SHOW / EXPORT BOILERPLATE ==================
-final_objs = conn_parts
+final_objs = [work_box]
 if 'show_object' in globals(): # If using cq-editor, only render the final object
     for i, final_obj in enumerate(final_objs):
         show_object(final_obj, name="final_obj_{}".format(i))
