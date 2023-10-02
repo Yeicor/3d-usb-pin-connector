@@ -64,7 +64,7 @@ jobs:
           EOF
           # Generate a screenshot of the static site to display on the README.
           sudo apt-get install chromium-browser
-          chromium-browser --headless --disable-gpu --screenshot public/index.png public/index.html
+          chromium-browser --headless --disable-gpu --screenshot=public/index.png public/index.html
       - name: Deploy static site
         uses: JamesIves/github-pages-deploy-action@v4
         with:
