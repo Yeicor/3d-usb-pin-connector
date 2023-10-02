@@ -147,6 +147,14 @@ if 'show_object' in globals(): # If using cq-editor, only render the final objec
     for i, final_obj in enumerate(final_objs):
         show_object(final_obj, name="final_obj_{}".format(i))
 else: # Otherwise, export stl
+    os.makedirs('build', exist_ok=True)
     for i, final_obj in enumerate(final_objs):
-        with open('obj_{}.stl'.format(i), 'w') as out:
-            cq.exporters.exportShape(final_obj, 'STL', out, tolerance=0.01, angularTolerance=0.01)
+        for fmt_ptr in dir(cq.exporters.ExportTypes):
+            fmt = getattr(cq.exporters.ExportTypes, fmt_ptr)
+            if isinstance(fmt, str) and '.' not in fmt:
+                print('Format: %s' % fmt)
+                cq.exporters.export(final_obj, 'build/obj%d.%s' % (i, fmt.lower()), exportType=fmt)
+    ass = cq.Assembly()
+    for final_obj in final_objs:
+        ass = ass.add(final_obj)
+    ass.save('build/assembly.gltf')
