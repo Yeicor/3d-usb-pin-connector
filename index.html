@@ -2,9 +2,18 @@
 <html>
   <head>
     <title>3D Model</title><!--  -->
-    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.1.1/model-viewer.min.js"></script>
+    <script type="module" src="https://unpkg.com/@google/model-viewer@3.2.1/dist/model-viewer.min.js
+    "></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <style>
+      model-viewer { width: 100vw; height: 100vh; }
+      body { margin: 0; overflow: hidden; }
+    </style>
   </head>
   <body>
-    <model-viewer src="assembly.gltf" ar ar-modes="webxr scene-viewer quick-look" camera-controls poster="poster.webp" shadow-intensity="1" environment-image="spruit_sunrise_1k_HDR.hdr" skybox-image="spruit_sunrise_1k_HDR.hdr" auto-rotate> </model-viewer>
+    <model-viewer 
+      src="assembly.gltf" ar ar-modes="webxr scene-viewer quick-look" camera-controls shadow-intensity="1" auto-rotate
+      environment-image="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/rural_asphalt_road_1k.hdr" 
+      skybox-image="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/rural_asphalt_road_1k.hdr"> </model-viewer>
   </body>
 </html>
