@@ -45,7 +45,8 @@ jobs:
           <!DOCTYPE html>
           <html>
             <head>
-              <title>3D Model</title>
+              <title>3D Model</title><!--  -->
+              <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.1.1/model-viewer.min.js"></script>
             </head>
             <body>
               <model-viewer src="assembly.gltf" ar ar-modes="webxr scene-viewer quick-look" camera-controls poster="poster.webp" shadow-intensity="1" environment-image="spruit_sunrise_1k_HDR.hdr" skybox-image="spruit_sunrise_1k_HDR.hdr" auto-rotate> </model-viewer>
