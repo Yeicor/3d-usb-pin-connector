@@ -2,7 +2,9 @@
 
 You can preview the model in an interactive demo by clicking the following render of the latest design:
 
-[![render.png](https://github.com/Yeicor/usb-pin-connector/blob/gh-pages/index.png?raw=true)](https://yeicor.github.io/usb-pin-connector/)
+[![index.png](https://github.com/Yeicor/usb-pin-connector/blob/gh-pages/index.png?raw=true)](https://yeicor.github.io/usb-pin-connector/)
+[![obj0.svg](https://github.com/Yeicor/usb-pin-connector/blob/gh-pages/obj0.svg?raw=true)](https://yeicor.github.io/usb-pin-connector/)
+[![obj1.svg](https://github.com/Yeicor/usb-pin-connector/blob/gh-pages/obj1.svg?raw=true)](https://yeicor.github.io/usb-pin-connector/)
 
 3D printed results:
 

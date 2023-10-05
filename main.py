@@ -4,41 +4,46 @@
 
 # ================== IMPORTS BOILERPLATE ==================
 import cadquery as cq
-import os, math
+import os
+import math
 from_cq_editor = False
-if 'show_object' in globals(): # If using cq-editor, only render the final object
+if 'show_object' in globals():  # If using cq-editor, only render the final object
     from_cq_editor = True
     show = show_object
 else:
-    show = lambda *args, **kwargs: print("Ignoring show(...) as cq-editor was not detected")
-    debug = lambda *args, **kwargs: print("Ignoring debug(...) as cq-editor was not detected")
+    show = lambda *args, **kwargs: print(
+        "Ignoring show(...) as cq-editor was not detected")
+    debug = lambda *args, **kwargs: print(
+        "Ignoring debug(...) as cq-editor was not detected")
 
 # ================== PARAMETERS ==================
 # 3D printing basics
-tol = 0.2 # Tolerance
-wall_min = 0.4 # Minimum wall width
-wall = wall_min * 3 # Recommended wall width
+tol = 0.2  # Tolerance
+wall_min = 0.4  # Minimum wall width
+wall = wall_min * 3  # Recommended wall width
 
 # USB
 usb_conn_size = cq.Vector(12, 4.5, 10)
-usb_conn_platform_size = cq.Vector(usb_conn_size.x - wall_min*2, usb_conn_size.y/2, usb_conn_size.z)
+usb_conn_platform_size = cq.Vector(
+    usb_conn_size.x - wall_min*2, usb_conn_size.y/2, usb_conn_size.z)
 
 # Pins
 pin_conn_size = cq.Vector(1, 1, 6)
 pin_handle_size = cq.Vector(2.8, 2.8, 14.2)
-pin_sep = 7 # Distance between the centers of the power and ground pins
+pin_sep = 7  # Distance between the centers of the power and ground pins
 
 # ================== MODELLING ==================
 
 # Complete box to work on...
-max_depth = wall + tol*2 + pin_handle_size.z + max(usb_conn_size.z, pin_conn_size.z + wall)
+max_depth = wall + tol*2 + pin_handle_size.z + \
+    max(usb_conn_size.z, pin_conn_size.z + wall)
 obj = (
     cq.Workplane("YZ")
     .box(usb_conn_size.x, usb_conn_size.y, max_depth, centered=[True, False, True])
 )
 
 # Add a stopper on the back for the cover...
-#debug(obj.faces("<X"))
+# debug(obj.faces("<X"))
 obj = (
     obj
     .faces("<X")
@@ -49,7 +54,7 @@ obj = (
 )
 
 # Without the usb platform...
-#debug(obj.faces(">X"))
+# debug(obj.faces(">X"))
 obj = (
     obj
     .faces(">X")
@@ -59,7 +64,7 @@ obj = (
 )
 
 # With pin holes
-#debug(obj.faces("|Z").faces(">>Z[1]"))
+# debug(obj.faces("|Z").faces(">>Z[1]"))
 obj = (
     obj
     .faces("|Z").faces(">>Z[1]")
@@ -71,7 +76,7 @@ obj = (
 )
 
 # With pin handle and cable holes
-#debug(obj.faces("%Plane and |X").faces(">>X[2]"))
+# debug(obj.faces("%Plane and |X").faces(">>X[2]"))
 obj = (
     obj
     .faces("%Plane and |X").faces(">>X[2]")
@@ -82,7 +87,7 @@ obj = (
 )
 
 # With cable holes
-#debug(obj.faces("%Plane and |X").faces(">>X[1]"))
+# debug(obj.faces("%Plane and |X").faces(">>X[1]"))
 obj = (
     obj
     .faces("%Plane and |X").faces(">>X[1]")
@@ -93,7 +98,7 @@ obj = (
 )
 
 # Without the need for supports and plausible assembly (remove ceilings)
-#debug(obj.faces("%Plane and |Z").faces(">>Z[1] or >>Z[2]"))
+# debug(obj.faces("%Plane and |Z").faces(">>Z[1] or >>Z[2]"))
 to_remove = cq.Workplane()
 for roof_face in obj.faces("%Plane and |Z").faces(">>Z[1] or >>Z[2]").vals():
     bb = roof_face.BoundingBox()
@@ -106,7 +111,7 @@ for roof_face in obj.faces("%Plane and |Z").faces(">>Z[1] or >>Z[2]").vals():
     # Combine removals
     to_remove += to_remove_iter
 obj = obj - to_remove
-#debug(work_box.faces("|Z").faces(">>Z[1] or >>Z[2]"))
+# debug(work_box.faces("|Z").faces(">>Z[1] or >>Z[2]"))
 
 # Extra: an optional cover that helps achieve a better connection
 cover = (
@@ -115,14 +120,14 @@ cover = (
     .faces("|X")
     .shell(-wall + 2*tol)
     .translate(cq.Vector(0, 0, -wall))
-    
+
 )
 # Move it back to match the zmin of the object (could be done with an assembly...)
 moveX = cover.val().BoundingBox().xmin - obj.val().BoundingBox().xmin
 cover = cover.translate(cq.Vector(-moveX, 0, 0))
 cover -= obj.shell(2*tol) + obj
 # Keep the connection in place with bottom supports
-#debug(cover.faces("|Z").faces(">>Z[1]"))
+# debug(cover.faces("|Z").faces(">>Z[1]"))
 cover = (
     cover
     .faces("|Z").faces(">>Z[1]")
@@ -132,29 +137,32 @@ cover = (
     .extrude(wall)
 )
 # Chamfer cover to make it printable without supports
-#debug(cover.edges("|Y").edges(">>Z[3]"))
+# debug(cover.edges("|Y").edges(">>Z[3]"))
 cover = (
     cover
     .edges("|Y").edges(">>Z[3]")
     .chamfer(wall-0.01, 3*wall)
 )
 # Final filleting, except for the print surface
-cover = cover.edges("(>Z or <Z or (<X and >Y) or (<X and <Y)) and (not >X)").fillet(wall/2)
+cover = cover.edges(
+    "(>Z or <Z or (<X and >Y) or (<X and <Y)) and (not >X)").fillet(wall/2)
 
 # ================== SHOW / EXPORT BOILERPLATE ==================
 final_objs = [obj, cover]
-if 'show_object' in globals(): # If using cq-editor, only render the final object
+if 'show_object' in globals():  # If using cq-editor, only render the final object
     for i, final_obj in enumerate(final_objs):
         show_object(final_obj, name="final_obj_{}".format(i))
-else: # Otherwise, export stl
+else:  # Otherwise, export stl
     os.makedirs('build', exist_ok=True)
     for i, final_obj in enumerate(final_objs):
         for fmt_ptr in dir(cq.exporters.ExportTypes):
             fmt = getattr(cq.exporters.ExportTypes, fmt_ptr)
             if isinstance(fmt, str) and '.' not in fmt:
                 print('Format: %s' % fmt)
-                cq.exporters.export(final_obj, 'build/obj%d.%s' % (i, fmt.lower()), exportType=fmt)
+                cq.exporters.export(final_obj, 'build/obj%d.%s' %
+                                    (i, fmt.lower()), exportType=fmt)
     ass = cq.Assembly()
-    for final_obj in final_objs:
-        ass = ass.add(final_obj)
+    colors = ["green", "yellow", "cyan"]
+    for i, final_obj in enumerate(final_objs):
+        ass = ass.add(cq.Assembly(final_obj, color=cq.Color(colors[i % len(colors)])))
     ass.save('build/assembly.gltf')
