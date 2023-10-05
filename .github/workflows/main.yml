@@ -35,7 +35,7 @@ jobs:
           mkdir -p public
           cp build/assembly.gltf public/
           cd build && for i in *.svg; do
-            sed -E 's/<g /<rect width="99999999%" height="99999999%" fill="white"\/><g /' "$i" > "../public/$i"
+            sed -z -E 's/<g /<rect width="99999999%" height="99999999%" fill="white"\/><g /' "$i" > "../public/$i"
           done && cd ..
           cat >public/index.html <<EOF
           <!DOCTYPE html>
