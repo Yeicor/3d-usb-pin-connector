@@ -2,15 +2,15 @@
 
 You can preview the model in an interactive demo by clicking the following render of the latest design:
 
-[![obj0.png](https://yeicor.github.io/usb-pin-connector/models/main/usb_connector.png)](https://yeicor.github.io/usb-pin-connector/)
+[![obj0.png](https://yeicor.github.io/3d-usb-pin-connector/models/main/usb_connector.png)](https://yeicor.github.io/3d-usb-pin-connector/)
 
-![obj0.svg](https://yeicor.github.io/usb-pin-connector/models/main/usb_connector.svg)
+![obj0.svg](https://yeicor.github.io/3d-usb-pin-connector/models/main/usb_connector.svg)
 
-[![obj0.png](https://yeicor.github.io/usb-pin-connector/models/main/usb_connector_cover.png)](https://yeicor.github.io/usb-pin-connector/)
+[![obj0.png](https://yeicor.github.io/3d-usb-pin-connector/models/main/usb_connector_cover.png)](https://yeicor.github.io/3d-usb-pin-connector/)
 
-![obj0.svg](https://yeicor.github.io/usb-pin-connector/models/main/usb_connector_cover.svg)
+![obj0.svg](https://yeicor.github.io/3d-usb-pin-connector/models/main/usb_connector_cover.svg)
 
-You can download the latest builds from the [workflow runs](https://github.com/Yeicor/usb-pin-connector/actions/workflows/main.yml).
+You can download the latest builds from the [workflow runs](https://github.com/Yeicor/3d-usb-pin-connector/actions/workflows/main.yml).
 3D printed results:
 
 <!--suppress CheckImageSize -->
