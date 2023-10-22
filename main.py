@@ -2,19 +2,7 @@
 # - Fit in the top-half of a USB
 # - Connect 2 pins to power and ground
 
-# ================== IMPORTS BOILERPLATE ==================
 import cadquery as cq
-import os
-import math
-from_cq_editor = False
-if 'show_object' in globals():  # If using cq-editor, only render the final object
-    from_cq_editor = True
-    show = show_object
-else:
-    show = lambda *args, **kwargs: print(
-        "Ignoring show(...) as cq-editor was not detected")
-    debug = lambda *args, **kwargs: print(
-        "Ignoring debug(...) as cq-editor was not detected")
 
 # ================== PARAMETERS ==================
 # 3D printing basics
@@ -39,7 +27,7 @@ max_depth = wall + tol*2 + pin_handle_size.z + \
     max(usb_conn_size.z, pin_conn_size.z + wall)
 obj = (
     cq.Workplane("YZ")
-    .box(usb_conn_size.x, usb_conn_size.y, max_depth, centered=[True, False, True])
+    .box(usb_conn_size.x, usb_conn_size.y, max_depth, centered=(True, False, True))
 )
 
 # Add a stopper on the back for the cover...
@@ -49,7 +37,7 @@ obj = (
     .faces("<X")
     .workplane()
     .pushPoints([cq.Vector(-usb_conn_size.x/2-wall, 0, 0), cq.Vector(usb_conn_size.x/2, 0, 0)])
-    .rect(wall, usb_conn_size.y, centered=[False, False])
+    .rect(wall, usb_conn_size.y, centered=(False, False))
     .extrude(-wall)
 )
 
@@ -59,7 +47,7 @@ obj = (
     obj
     .faces(">X")
     .workplane()
-    .rect(usb_conn_platform_size.x, usb_conn_platform_size.y, centered=[True, False])
+    .rect(usb_conn_platform_size.x, usb_conn_platform_size.y, centered=(True, False))
     .cutBlind(-usb_conn_platform_size.z)
 )
 
@@ -71,7 +59,7 @@ obj = (
     .workplane()
     .transformed(offset=cq.Vector(-usb_conn_platform_size.z, 0, 0))
     .pushPoints([cq.Vector(0, -pin_sep/2, 0), cq.Vector(0, pin_sep/2, 0)])
-    .rect(pin_conn_size.z + tol * 2, pin_conn_size.x + tol * 2, centered=[False, True])
+    .rect(pin_conn_size.z + tol * 2, pin_conn_size.x + tol * 2, centered=(False, True))
     .cutBlind(-(pin_conn_size.y + tol * 2))
 )
 
@@ -116,7 +104,7 @@ obj = obj - to_remove
 # Extra: an optional cover that helps achieve a better connection
 cover = (
     cq.Workplane("XY")
-    .box(pin_handle_size.z + 2 * tol + wall, usb_conn_size.x + 2*wall, usb_conn_size.y + 2*wall, centered=[False, True, False])
+    .box(pin_handle_size.z + 2 * tol + wall, usb_conn_size.x + 2*wall, usb_conn_size.y + 2*wall, centered=(False, True, False))
     .faces("|X")
     .shell(-wall + 2*tol)
     .translate(cq.Vector(0, 0, -wall))
@@ -147,22 +135,5 @@ cover = (
 cover = cover.edges(
     "(>Z or <Z or (<X and >Y) or (<X and <Y)) and (not >X)").fillet(wall/2)
 
-# ================== SHOW / EXPORT BOILERPLATE ==================
-final_objs = [obj, cover]
-if 'show_object' in globals():  # If using cq-editor, only render the final object
-    for i, final_obj in enumerate(final_objs):
-        show_object(final_obj, name="final_obj_{}".format(i))
-else:  # Otherwise, export stl
-    os.makedirs('build', exist_ok=True)
-    for i, final_obj in enumerate(final_objs):
-        for fmt_ptr in dir(cq.exporters.ExportTypes):
-            fmt = getattr(cq.exporters.ExportTypes, fmt_ptr)
-            if isinstance(fmt, str) and '.' not in fmt:
-                print('Format: %s' % fmt)
-                cq.exporters.export(final_obj, 'build/obj%d.%s' %
-                                    (i, fmt.lower()), exportType=fmt)
-    ass = cq.Assembly()
-    colors = ["green", "yellow", "cyan"]
-    for i, final_obj in enumerate(final_objs):
-        ass = ass.add(cq.Assembly(final_obj, color=cq.Color(colors[i % len(colors)])))
-    ass.save('build/assembly.gltf')
+show_object(obj, "usb_connector", {"color": (0., 1., 0.)})
+show_object(cover, "usb_connector_cover", {"color": (1., 1., 0)})

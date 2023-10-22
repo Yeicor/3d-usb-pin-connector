@@ -5,14 +5,22 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
-
-permissions:
-  contents: write
+  workflow_dispatch: { }
 
 jobs:
   build:
 
     runs-on: "ubuntu-latest"
+
+    # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
+    permissions:
+      pages: "write"      # to deploy to Pages
+      id-token: "write"   # to verify the deployment originates from an appropriate source
+
+    # Deploy to the github-pages environment
+    environment:
+      name: "github-pages"
+      # url: "${{ steps.deployment.outputs.page_url }}"
 
     steps:
       - uses: "actions/checkout@v4"
@@ -20,53 +28,16 @@ jobs:
       - uses: "actions/setup-python@v4"
         with:
           python-version: "3.11"
+          cache: "pip"
 
-      - run: "python -m pip install -r requirements.txt"
+      - run: "pip install -r requirements.txt"
 
-      - run: "python main.py"
-
-      - uses: "actions/upload-artifact@v3"
+      - uses: "Yeicor/cadquery-action@v2"
         with:
-          name: builds
-          path: build/*
-
-      - name: "Prepare a basic static site that displays the final model"
-        run: |
-          mkdir -p public
-          cp build/assembly.gltf public/
-          cd build && for i in *.svg; do
-            sed -z -E 's/<g /<rect width="99999999%" height="99999999%" fill="white"\/><g /' "$i" > "../public/$i"
-          done && cd ..
-          cat >public/index.html <<EOF
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <title>3D Model</title><!--  -->
-              <script type="module" src="https://unpkg.com/@google/model-viewer@3.2.1/dist/model-viewer.min.js
-              "></script>
-              <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-              <style>
-                model-viewer { width: 100vw; height: 100vh; }
-                body { margin: 0; overflow: hidden; }
-              </style>
-            </head>
-            <body>
-              <model-viewer 
-                src="assembly.gltf" ar ar-modes="webxr scene-viewer quick-look" camera-controls shadow-intensity="1" 
-                auto-rotate camera-orbit="102.5deg 78.34deg 55.29m" field-of-view="25.16deg"
-                environment-image="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/rural_asphalt_road_1k.hdr" 
-                skybox-image="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/rural_asphalt_road_1k.hdr"> </model-viewer>
-            </body>
-          </html>
-          EOF
-          # Generate a screenshot of the static site to display on the README.
-          sudo apt-get install chromium-browser
-          chromium-browser --headless --disable-gpu --disable-web-security --user-data-dir=$(pwd)/chrome --headless=new --virtual-time-budget=5000 --screenshot=public/index.png public/index.html
-      - name: Deploy static site
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          branch: gh-pages
-          folder: public
+          scripts: "main.py"
+          # formats: "STL|STEP|AMF|SVG|TJS|DXF|VRML|VTP|3MF|GLTF"
+          # website: "."
+          # website-screenshot: "true"
 
 
 
